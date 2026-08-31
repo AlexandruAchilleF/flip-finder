@@ -4,6 +4,7 @@ import psycopg2
 import os
 from dotenv import load_dotenv
 import time
+import streamlit as st
 
 load_dotenv()
 
@@ -15,7 +16,8 @@ st.title("Flip Finder - Radar Imobiliar Bacău")
 # Functie pentru conectare (folosim @st.cache_resource ca sa nu se reconecteze la fiecare click)
 @st.cache_resource
 def get_connection():
-    return psycopg2.connect(os.getenv("DATABASE_URL"))
+    return psycopg2.connect(st.secrets["DATABASE_URL"])
+
 
 
 # Functie pentru a extrage lista de apartamente cu ultimul lor pret
