@@ -250,10 +250,13 @@ def extrage_date_de_pe_site():
 
 def salveaza_in_baza_de_date(anunturi):
     """
-    LOAD & TRANSFORM: Salvarea datelor fara a pierde isoricul
+    LOAD & TRANSFORM: Salvarea datelor fara a pierde istoricul
     """
     conn = get_connection()
     cursor = conn.cursor()
+
+    anunturi_noi_azi = 0
+    scaderi_pret_azi = 0
 
     for anunt in anunturi:
         # Verificam daca apartamentul exista deja in tabelul static
@@ -262,6 +265,8 @@ def salveaza_in_baza_de_date(anunturi):
 
         if rezultat is None:
             # Apartamentul este nou. Il inseram in tabelul 'apartamente'
+            anunturi_noi_azi += 1
+
             cursor.execute("""
                 INSERT INTO apartamente (id_anunt_original, url_anunt, oras, cartier, suprafata_mp)
                 VALUES (%s, %s, %s, %s, %s) RETURNING id_apartament;
@@ -270,7 +275,7 @@ def salveaza_in_baza_de_date(anunturi):
             id_apartament = cursor.fetchone()[0]
             print(f"Apartament nou gasit si salvat: {anunt['cartier']} ({anunt['pret']}€)")
         else:
-            # Apartamentul exista deja. Ii luam id ul
+            # Apartamentul exista deja. Ii luam id-ul
             id_apartament = rezultat[0]
             print(f"Apartament existent gasit in baza de date: {anunt['cartier']}")
 
@@ -282,7 +287,7 @@ def salveaza_in_baza_de_date(anunturi):
         """, (id_apartament,))
         ultimul_pret_inregistrat = cursor.fetchone()
 
-        # Adaugam un rand nou doar daca pretul s a schimbat
+        # Adaugam un rand nou doar daca pretul s-a schimbat
         if ultimul_pret_inregistrat is None or ultimul_pret_inregistrat[0] != anunt["pret"]:
             cursor.execute("""
                 INSERT INTO istoric_preturi (id_apartament, pret)
@@ -290,25 +295,46 @@ def salveaza_in_baza_de_date(anunturi):
             """, (id_apartament, anunt["pret"]))
 
             if ultimul_pret_inregistrat is not None:
-                print(f"PRET MODIFICAT! A ajuns de la {ultimul_pret_inregistrat[0]}€ la {anunt['pret']}€")
+                pret_vechi = ultimul_pret_inregistrat[0]
+                pret_nou = anunt["pret"]
+
+                if pret_nou < pret_vechi:
+                    scaderi_pret_azi += 1
+                    print(f"📉 SCADERE DE PRET! De la {pret_vechi}€ la {pret_nou}€")
+
+                    # Construim si trimitem alerta DOAR la scadere de pret
+                    mesaj_alerta = (
+                        f"SCADERE DE PRET!\n\n"
+                        f"Cartier: {anunt['cartier']}\n"
+                        f"Suprafata: {anunt['suprafata_mp']} mp\n"
+                        f"Pret vechi: {pret_vechi}€\n"
+                        f"Pret nou: {pret_nou}€\n\n"
+                        f"Link: {anunt['url']}"
+                    )
+                    trimite_notificare_telegram(mesaj_alerta)
+                else:
+                    print(f"Pretul a CRESCUT de la {pret_vechi}€ la {pret_nou}€.")
             else:
                 print(f"Pret initial setat: {anunt['pret']}€")
         else:
             print(f"Pretul a ramas neschimbat ({anunt['pret']}€).")
 
-    if ultimul_pret_inregistrat is not None:
-        print(f"PRET MODIFICAT! A ajuns de la {ultimul_pret_inregistrat[0]}€ la {anunt['pret']}€")
+    # Trimitere raport zilnic
+    cursor.execute("SELECT COUNT(*) FROM apartamente;")
+    total_apartamente = cursor.fetchone()[0]
 
-        # Construim mesajul pentru Telegram
-        mesaj_alerta = (
-            f"SCADERE DE PRET!\n\n"
-            f"Cartier: {anunt['cartier']}\n"
-            f"Suprafata: {anunt['suprafata_mp']} mp\n"
-            f"Pret vechi: {ultimul_pret_inregistrat[0]}€\n"
-            f"Pret nou: {anunt['pret']}€\n\n"
-            f"Link: {anunt['url']}"
-        )
-        trimite_notificare_telegram(mesaj_alerta)
+    mesaj_raport = (
+        f"Buna dimineata! Iata raportul imobiliar de azi:\n\n"
+        f"Total oferte monitorizate: {total_apartamente}\n"
+        f"Anunturi noi aparute azi: {anunturi_noi_azi}\n"
+        f"Scaderi de pret azi: {scaderi_pret_azi}\n\n"
+        f"Intra pe Radar pentru detalii:\n"
+        f"https://alexandruachillef-flip-finder-dashboard-k6l87l.streamlit.app"
+    )
+
+    # Trimitem raportul ca o concluzie a scriptului
+    trimite_notificare_telegram(mesaj_raport)
+    print("Raport zilnic trimis pe Telegram cu succes!")
 
     # Salvam modificarile
     conn.commit()

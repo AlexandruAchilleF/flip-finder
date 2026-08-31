@@ -4,7 +4,6 @@ import psycopg2
 import os
 from dotenv import load_dotenv
 import time
-import streamlit as st
 
 load_dotenv()
 
@@ -13,15 +12,13 @@ st.set_page_config(page_title="Flip Finder Dashboard", page_icon="🏡", layout=
 st.title("Flip Finder - Radar Imobiliar Bacău")
 
 
-# Functie pentru conectare (folosim @st.cache_resource ca sa nu se reconecteze la fiecare click)
-@st.cache_resource
+# Functie pentru conectare
 def get_connection():
     return psycopg2.connect(st.secrets["DATABASE_URL"])
 
 
-
-# Functie pentru a extrage lista de apartamente cu ultimul lor pret
-@st.cache_data(ttl=60)  # Pastreaza datele în memorie 60 de secunde
+# Functie pentru a extrage lista de apartamente
+@st.cache_data(ttl=60)
 def load_latest_data():
     conn = get_connection()
     query = """
@@ -44,10 +41,11 @@ def load_latest_data():
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         df = pd.read_sql(query, conn)
+    conn.close()
     return df
 
 
-# Functie pentru a trage istoricul unui singur apartament (pentru grafic)
+# Functie pentru a extrage istoricul unui singur apartament
 def load_price_history(id_apartament):
     conn = get_connection()
     query = f"""
@@ -59,37 +57,65 @@ def load_price_history(id_apartament):
     import warnings
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        return pd.read_sql(query, conn)
+        df = pd.read_sql(query, conn)
+    conn.close()
+    return df
 
-
-# Construirea interfatei grafice
-
+# Construirea interfatei
 df_apartamente = load_latest_data()
 
-st.write(f"**{len(df_apartamente)}** oferte monitorizate în prezent.")
+if not df_apartamente.empty:
 
-# Imparțim ecranul în doua coloane
-col1, col2 = st.columns([2, 1])
+    st.sidebar.header("Filtrează Anunțurile")
 
-with col1:
-    st.subheader("Lista Apartamentelor (Cele mai ieftine primele)")
-    # Afisam tabelul interactiv
-    st.dataframe(df_apartamente, use_container_width=True, hide_index=True)
+    # Filtru Cartier
+    lista_cartiere = ["Toate"] + list(df_apartamente['Cartier'].unique())
+    cartier_ales = st.sidebar.selectbox("Alege cartierul:", lista_cartiere)
 
-with col2:
-    st.subheader("Istoric Preț")
-    if not df_apartamente.empty:
-        # Cream un meniu de selectie (Dropdown)
-        apartament_selectat = st.selectbox(
-            "Selectează ID-ul unui apartament pentru a-i vedea graficul:",
-            df_apartamente['ID']
+    # Filtru Pret
+    pret_min = int(df_apartamente['Preț Curent (€)'].min())
+    pret_max = int(df_apartamente['Preț Curent (€)'].max())
+    pret_ales = st.sidebar.slider("Preț maxim (€):", pret_min, pret_max, pret_max)
+
+    # Aplicam filtrele
+    df_filtrat = df_apartamente[df_apartamente['Preț Curent (€)'] <= pret_ales]
+    if cartier_ales != "Toate":
+        df_filtrat = df_filtrat[df_filtrat['Cartier'] == cartier_ales]
+
+    st.write(f"S-au găsit **{len(df_filtrat)}** oferte (din totalul de {len(df_apartamente)}).")
+
+    #Afisare rezultate
+    col1, col2 = st.columns([2, 1])
+
+    with col1:
+        st.subheader("Lista Apartamentelor")
+        # Tabel cu link-uri
+        st.dataframe(
+            df_filtrat,
+            column_config={
+                "Link URL": st.column_config.LinkColumn(
+                    "Link Anunț", display_text="Vezi pe OLX"
+                )
+            },
+            hide_index=True,
+            use_container_width=True
         )
 
-        # Extragem si desenam graficul pentru apartamentul selectat
-        df_istoric = load_price_history(apartament_selectat)
+    with col2:
+        st.subheader("Istoric Preț")
+        if not df_filtrat.empty:
+            # Dropdown doar cu ID-urile vizibile dupa filtrare
+            apartament_selectat = st.selectbox(
+                "Selectează ID-ul pentru grafic:",
+                df_filtrat['ID']
+            )
 
-        # Setam coloana de date ca index pentru a fi afisată pe axa X
-        df_istoric.set_index('Data', inplace=True)
-        st.line_chart(df_istoric)
-    else:
-        st.info("Baza de date este goală. Rulează scraper.py mai întâi!")
+            # Desenam graficul
+            df_istoric = load_price_history(apartament_selectat)
+            df_istoric.set_index('Data', inplace=True)
+            st.line_chart(df_istoric)
+        else:
+            st.info("Niciun apartament nu se potrivește filtrelor tale..️")
+
+else:
+    st.info("Baza de date este goala")
