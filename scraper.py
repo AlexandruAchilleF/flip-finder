@@ -18,9 +18,13 @@ def trimite_notificare_telegram(mesaj):
     }
 
     try:
-        requests.post(url, json=payload)
+        raspuns = requests.post(url, json=payload)
+        if raspuns.status_code != 200:
+            print(f"EROARE DE LA TELEGRAM: {raspuns.status_code} - {raspuns.text}")
+        else:
+            print("Notificare trimisă real pe Telegram.")
     except Exception as e:
-        print(f"Eroare la trimiterea pe Telegram: {e}")
+        print(f"Eroare de conexiune la Telegram: {e}")
 
 def gaseste_cartier(titlu, descriere):
     # Unim titlul si descrierea si le facem cu litere mici ca sa cautam usor oriunde in text
