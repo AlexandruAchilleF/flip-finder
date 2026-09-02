@@ -364,7 +364,7 @@ def salveaza_in_baza_de_date(anunturi):
                         f"Pret nou: {pret_nou}€\n\n"
                         f"Link: {anunt['url']}"
                     )
-                    trimite_notificare_telegram(mesaj_alerta)
+                    trimite_notificare_telegram(conn, mesaj_alerta)
                 else:
                     print(f"Pretul a CRESCUT de la {pret_vechi}€ la {pret_nou}€.")
             else:
@@ -386,7 +386,7 @@ def salveaza_in_baza_de_date(anunturi):
     )
 
     # Trimitem raportul ca o concluzie a scriptului
-    trimite_notificare_telegram(mesaj_raport)
+    trimite_notificare_telegram(conn, mesaj_raport)
     print("Raport zilnic trimis pe Telegram cu succes!")
 
     # Salvam modificarile
