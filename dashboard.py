@@ -67,6 +67,10 @@ def incarca_date():
 
         return "Normal"
 
+    df['status'] = df.apply(status_oportunitate, axis=1)
+
+    return df
+
 df = incarca_date()
 
 # Metrice Rapide
