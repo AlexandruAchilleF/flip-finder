@@ -11,6 +11,16 @@ st.set_page_config(page_title="Flip Finder Bacau", layout="wide")
 st.title("Radar Imobiliar - Flip Finder Bacău")
 st.markdown("Monitorizează piața, descoperă scăderile de preț și găsește oportunități de investiții.")
 
+col_text, col_buton = st.columns([2, 1])
+
+with col_text:
+    st.info("**Nu rata nicio ocazie!** Sistemul nostru scanează piața zilnic și trimite pe Telegram alertele cu scăderile de preț și ofertele sub media pieței.")
+
+with col_buton:
+    st.write("") # Spatiu de aliniere
+    st.link_button("Abonează-te Gratuit pe Telegram", "https://t.me/FlipFinderBacauBot", type="primary", use_container_width=True)
+
+st.divider()
 
 # Extragerea si Transformarea Datelor
 @st.cache_data(ttl=3600)
