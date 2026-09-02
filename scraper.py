@@ -7,20 +7,73 @@ import time
 load_dotenv()
 
 
-def trimite_notificare_telegram(mesaj):
+def extrage_abonati(conn):
+    """Trage din baza de date lista tuturor ID urilor care s-au abonat."""
+    with conn.cursor() as cur:
+        cur.execute("SELECT chat_id FROM abonati_telegram;")
+        randuri = cur.fetchall()
+        # Returnam lista de ID-uri [123, 456] sau lista goala []
+        return [rand[0] for rand in randuri]
+
+
+def adauga_abonat_nou(conn, chat_id):
+    """Verifica daca ID ul exista deja. Daca nu, il adauga in tabel."""
+    with conn.cursor() as cur:
+        cur.execute("SELECT chat_id FROM abonati_telegram WHERE chat_id = %s;", (chat_id,))
+        exista = cur.fetchone()
+
+        if not exista:
+            cur.execute("INSERT INTO abonati_telegram (chat_id) VALUES (%s);", (chat_id,))
+            conn.commit()
+            print(f"Utilizator nou adaugat in agenda: {chat_id}")
+
+
+def trimite_notificare_telegram(conn, mesaj):
     token = os.getenv("TELEGRAM_TOKEN")
-    chat_id = os.getenv("TELEGRAM_CHAT_ID")
     url = f"https://api.telegram.org/bot{token}/sendMessage"
 
-    payload = {
-        "chat_id": chat_id,
-        "text": mesaj
-    }
+    lista_abonati = extrage_abonati(conn)
+
+    if not lista_abonati:
+        print("Nu avem niciun abonat in baza de date.")
+        return
+
+    print(f"Trimit mesaj catre {len(lista_abonati)} abonati...")
+
+    for chat_id in lista_abonati:
+        payload = {
+            "chat_id": chat_id,
+            "text": mesaj
+        }
+        try:
+            requests.post(url, json=payload)
+            time.sleep(0.1)  # Pauza
+        except Exception as e:
+            print(f"Eroare la trimiterea pe Telegram pt {chat_id}: {e}")
+
+
+def citeste_abonati_noi_telegram(conn):
+    """
+    Verifica daca cineva a trimis vreun mesaj bot ului recent (ex: /start)
+    si adauga ID-ul in baza de date.
+    """
+    token = os.getenv("TELEGRAM_TOKEN")
+    url = f"https://api.telegram.org/bot{token}/getUpdates"
 
     try:
-        requests.post(url, json=payload)
+        raspuns = requests.get(url).json()
+        if raspuns.get("ok"):
+            mesaje = raspuns.get("result", [])
+            for mesaj in mesaje:
+                # Extragem id-ul chat-ului
+                try:
+                    chat_id = mesaj["message"]["chat"]["id"]
+                    adauga_abonat_nou(conn, chat_id)
+                except KeyError:
+                    # In caz ca update ul nu e un mesaj de text
+                    continue
     except Exception as e:
-        print(f"Eroare la trimiterea pe Telegram: {e}")
+        print(f"Eroare la citirea inbox-ului Telegram: {e}")
 
 def gaseste_cartier(titlu, descriere):
     # Unim titlul si descrierea si le facem cu litere mici ca sa cautam usor oriunde in text
@@ -300,7 +353,7 @@ def salveaza_in_baza_de_date(anunturi):
 
                 if pret_nou < pret_vechi:
                     scaderi_pret_azi += 1
-                    print(f"📉 SCADERE DE PRET! De la {pret_vechi}€ la {pret_nou}€")
+                    print(f"SCADERE DE PRET! De la {pret_vechi}€ la {pret_nou}€")
 
                     # Construim si trimitem alerta DOAR la scadere de pret
                     mesaj_alerta = (
@@ -344,6 +397,13 @@ def salveaza_in_baza_de_date(anunturi):
 
 if __name__ == "__main__":
     print("Pornim scraper-ul Flip Finder...")
+
+    conn = get_connection()
+    citeste_abonati_noi_telegram(conn)
+    conn.close()
+
     date_extrase = extrage_date_de_pe_site()
+
     salveaza_in_baza_de_date(date_extrase)
+
     print("Rulare completa!")

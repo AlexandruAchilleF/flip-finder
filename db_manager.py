@@ -17,7 +17,7 @@ def setup_database():
     cursor.execute("DROP TABLE IF EXISTS istoric_preturi CASCADE;")
     cursor.execute("DROP TABLE IF EXISTS apartamente CASCADE;")
 
-    # Creare tabel static
+    # Creare tabel static apartamente
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS apartamente (
             id_apartament SERIAL PRIMARY KEY,
@@ -29,13 +29,20 @@ def setup_database():
         );
     """)
 
-    # Creare tabel dinamic
+    # Creare tabel istoric pret
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS istoric_preturi (
             id_istoric SERIAL PRIMARY KEY,
             id_apartament INTEGER REFERENCES apartamente(id_apartament),
             pret NUMERIC NOT NULL,
             data_inregistrarii TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+
+    # Creare tabel abonati telegram
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS abonati_telegram (
+            chat_id BIGINT PRIMARY KEY
         );
     """)
 
