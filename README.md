@@ -1,66 +1,65 @@
-# Flip Finder - Radar Imobiliar Bacău
+# Flip Finder - Bacău Real Estate Radar
 
-Un sistem automatizat end-to-end de tip ETL (Extract, Transform, Load) conceput pentru a monitoriza piața imobiliară din Bacău. Proiectul extrage date zilnic de pe OLX, urmărește fluctuațiile de preț pentru fiecare apartament și trimite alerte automate, oferind în același timp un dashboard interactiv în cloud pentru analiză.
+An automated end-to-end ETL (Extract, Transform, Load) system designed to monitor the real estate market in Bacău. The project scrapes daily data from OLX, tracks price fluctuations for each apartment, and sends automated alerts, while providing an interactive cloud dashboard for analysis.
 
-## Arhitectura Sistemului
+## System Architecture
 
-Proiectul este împărțit în 4 componente principale:
+The project is divided into 4 main components:
 
-1. **Extract (Extragere):** Un scraper Python care interoghează API-ul OLX, navighează prin pagini (pagination) și extrage anunțurile imobiliare.
-2. **Transform (Curățare):** Folosind Pandas, datele sunt curățate, prețurile sunt standardizate în Euro (se aplică filtre de corecție pentru erorile utilizatorilor), iar cartierele sunt mapate.
-3. **Load (Stocare):** Datele sunt încărcate într-o bază de date relațională serverless (Neon PostgreSQL), menținând un istoric al prețurilor.
-4. **Visualize & Alert (Prezentare):** 
-   - Un Dashboard interactiv construit cu Streamlit, publicat în cloud.
-   - Un Bot de Telegram care trimite un raport zilnic detaliat cu prețurile care au crescut sau au scăzut.
+1. **Extract:** A Python scraper that queries the OLX API, navigates through pages (pagination), and extracts real estate listings.
+2. **Transform:** Using Pandas, the data is cleaned, prices are standardized in Euros (applying correction filters for user errors), and neighborhoods are mapped.
+3. **Load:** The data is loaded into a serverless relational database (Neon PostgreSQL), maintaining a price history.
+4. **Visualize & Alert:** 
+   - An interactive dashboard built with Streamlit, deployed in the cloud.
+   - A Telegram Bot that sends a detailed daily report with prices that have increased or decreased.
 
-## Tehnologii Folosite
+## Technologies Used
 
-* **Limbaj:** Python 3.14
-* **Manipulare Date:** Pandas, Requests
-* **Bază de Date:** PostgreSQL (găzduit pe Neon.tech), Psycopg2
+* **Language:** Python 3.14
+* **Data Manipulation:** Pandas, Requests
+* **Database:** PostgreSQL (hosted on Neon.tech), Psycopg2
 * **Frontend:** Streamlit, Streamlit Cloud
-* **Automatizare (CI/CD):** GitHub Actions (Cron Jobs)
-* **Notificări:** Telegram Bot API
+* **Automation (CI/CD):** GitHub Actions (Cron Jobs)
+* **Notifications:** Telegram Bot API
 
-## Funcționalități Cheie
+## Key Features
 
-* **Urmărire Istoric Prețuri:** Baza de date face legătura între ID-ul apartamentului și fluctuațiile sale de preț în timp.
-* **Filtre Interactive:** Dashboard-ul permite filtrarea dinamică a celor peste 700 de oferte pe cartiere și plafoane de preț.
-* **Execuție Automată:** Sistemul rulează automat în fiecare dimineață la 08:17 prin GitHub Actions.
-* **Securitate:** Parolarea bazei de date și a bot-ului de Telegram se face strict prin Variabile de Mediu (`.env` local, GitHub Secrets în cloud).
+* **Price History Tracking:** The database links the apartment ID to its price fluctuations over time.
+* **Interactive Filters:** The dashboard allows dynamic filtering of over 700 listings by neighborhoods and price ranges.
+* **Automated Execution:** The system runs automatically every morning at 08:17 via GitHub Actions.
+* **Security:** Database and Telegram bot credentials are strictly managed through Environment Variables (local `.env`, GitHub Secrets in the cloud).
 
-## Instrucțiuni de Configurare (Local)
+## Setup Instructions (Local)
 
-Pentru a rula acest proiect:
+To run this project:
 
-1. **Clonează repository-ul:**
+1. **Clone the repository:**
    ```bash
-   git clone https://github.com/AlexandruAchilleF/flip-finder.git
+   git clone [https://github.com/AlexandruAchilleF/flip-finder.git](https://github.com/AlexandruAchilleF/flip-finder.git)
    cd flip-finder
-   ```
 
-2. **Instalează dependențele:**
+2. **Install dependencies:**
    ```bash
    pip install -r requirements.txt
    ```
 
-3. **Setează variabilele de mediu:**
-   Creează un fișier `.env` în folderul principal și adaugă următoarele credențiale:
+3. **Set environment variables:**
+   Create a .env file in the main folder and add the following credentials:
    ```text
    DATABASE_URL=...
    TELEGRAM_TOKEN=...
    TELEGRAM_CHAT_ID=...
    ```
 
-4. **Rulează scraper-ul manual:**
+4. **Run the scraper manually:**
    ```bash
    python scraper.py
    ```
 
-5. **Pornește Dashboard-ul local:**
+5. **Start the local Dashboard:**
    ```bash
    streamlit run dashboard.py
    ```
 
-## Configurare GitHub Actions (Cloud)
-Pentru automatizarea zilnică, asigură-te că ai adăugat cele 3 variabile din fișierul `.env` în secțiunea **Settings > Secrets and variables > Actions > Repository secrets** din repository-ul tău GitHub.
+## GitHub Actions Configuration (Cloud)
+For daily automation, make sure you have added the 3 variables from the .env file into the Settings > Secrets and variables > Actions > Repository secrets section of your GitHub repository.
