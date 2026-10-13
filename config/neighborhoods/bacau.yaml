@@ -1,0 +1,36 @@
+# Neighborhood and street mapping for Bacau municipality.
+# Used by the location normalizer to identify the property's sub-district.
+
+city_name: "Bacău"
+city_slug: "bacau"
+
+# Direct mapping: street name or landmark -> neighborhood
+streets_to_neighborhood:
+  "9 mai": "Centru"
+  "unirii": "Centru"
+  "nicolae balcescu": "Centru"
+  "stefan cel mare": "Nord"
+  "militari": "Nord"
+  "neagoe voda": "Cornișa"
+  "milcov": "Sud"
+  "aeroportului": "Aeroport"
+
+# List of officially recognized neighborhoods for direct text lookup
+known_neighborhoods:
+  - "Centru"
+  - "Nord"
+  - "Sud"
+  - "Mioriței"
+  - "Cornișa"
+  - "Bistrița Lac"
+  - "Gară"
+  - "Republicii"
+  - "Letea"
+  - "Ura"
+  - "Aviatori"
+  - "Alecu Russo"
+  - "Banca Națională"
+  - "Energiei"
+  - "Mărăști"
+  - "Tache"
+  - "Aeroport"

@@ -1,0 +1,20 @@
+# Declarative configuration for crawling targets (cities and platforms).
+# Adding or modifying targets is performed here without altering Python code.
+
+targets:
+  - city_slug: "bacau"
+    city_name: "Bacău"
+    is_active: true
+    neighborhoods_config: "config/neighborhoods/bacau.yaml"
+    platforms:
+      olx:
+        category_id: "907"      # Apartments and studios for sale
+        region_id: "3"          # Bacau county taxonomy ID on OLX
+        city_id: "34959"        # Bacau city taxonomy ID on OLX
+        currency: "EUR"
+        sort_by: "filter_float_price:asc"
+        page_size: 40
+        max_pages: 50
+    filters:
+      min_surface_sqm: 15
+      max_surface_sqm: 400
