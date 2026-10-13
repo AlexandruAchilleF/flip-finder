@@ -44,7 +44,7 @@ flowchart TD
         
         Cron --> Scraper
         Scraper --> Extract
-        OLX -->|JSON Listings (Pages of 40)| Extract
+        OLX -->|"JSON Listings (Pages of 40)"| Extract
         Extract --> Transform
         Transform --> PersistenceLogic
     end
@@ -55,12 +55,12 @@ flowchart TD
             T_Hist["istoric_preturi<br/>(id_istoric, id_apartament, pret, data_inregistrarii)"]
             T_Users["abonati_telegram<br/>(chat_id)"]
         end
-        PersistenceLogic -->|Sequential Queries & Inserts| DB
+        PersistenceLogic -->|"Sequential Queries & Inserts"| DB
     end
 
     subgraph SideEffects["4. Synchronous Alerting (In-Pipeline)"]
         TG_Alerts["Telegram Bot API<br/>(Per-Listing Price Drop Alerts + Daily Summary)"]
-        PersistenceLogic -->|Synchronous HTTP POST per subscriber| TG_Alerts
+        PersistenceLogic -->|"Synchronous HTTP POST per subscriber"| TG_Alerts
         TG_Alerts --> EndUsers["Abonați Telegram"]
     end
 
@@ -69,7 +69,7 @@ flowchart TD
         MemoryPandas["Pandas In-Memory DataFrame<br/>• Window SQL Fetch<br/>• Neighborhood Avg Calculation<br/>• Opportunity Flag (15% below avg)"]
         EndUsersWeb["Investitori / Utilizatori Web"]
         
-        DB -->|Direct SQL Query with Window Functions| StreamlitApp
+        DB -->|"Direct SQL Query with Window Functions"| StreamlitApp
         StreamlitApp --> MemoryPandas
         MemoryPandas --> EndUsersWeb
     end
