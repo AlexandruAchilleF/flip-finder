@@ -22,6 +22,12 @@
 * **Consum & Vizualizare**: Streamlit Cloud (dashboard analitic direct conectat la PostgreSQL)
 * **Alertare**: Telegram Bot API (push notifications pentru scăderi de preț și sinteză zilnică)
 
+### 1.1 Structura Repository-ului (Tranziția la `src/` Layout & Config-Driven Setup)
+Repository-ul a fost restructurat din flat-layout-ul inițial într-o arhitectură profesională **`src/` layout** conformă standardelor Python Packaging Authority (PyPA) și principiilor 12-Factor App:
+* **`config/`**: Configurații declarative externalizate (`targets.yaml` pentru orașe/platforme și `neighborhoods/bacau.yaml` pentru rezoluție pe 2 nivele a cartierelor).
+* **`src/`**: Pachetul rădăcină al codului sursă (`core/` infrastructură, `schemas/` contracte Pydantic, `db/` modele și migrații, `crawler/` adaptoare de extragere, `services/` logica de business, `api/` routere FastAPI).
+* **`tests/`**: Suită dedicată de teste automatizate (`unit/`, `integration/`).
+
 ---
 
 ## 2. Diagramă de Arhitectură (Mermaid.js)
@@ -165,7 +171,7 @@ JOIN PreturiActuale pa ON a.id_apartament = pa.id_apartament;
   * Paginarea dinamică prin offset funcționează pentru dataset-uri de dimensiuni reduse (< 1000 înregistrări).
 * **Limitări majore**:
   1. **Autentificare și Sesiune Hardcodate (SPOF)**: În `scraper.py` (liniile 119-147) sunt inserate string-uri de cookie-uri reale (`PHPSESSID`, `OptanonConsent`, token-uri TCF v2) extrase manual din browser în august 2026. Dacă OLX invalidează token-ul sau modifică cerințele de handshake anti-bot, întregul pipeline eșuează instant.
-  2. **Parametri de căutare rigizi (Bacău only)**: `city_id: 34959`, `region_id: 3`, `category_id: 907` sunt hardcodate adânc în dicționarul de parametri. Trecerea la un alt oraș (ex. Iași, Cluj, București) necesită resscrierea codului.
+  2. **Parametri de căutare rigizi (Bacău only)**: În scriptul legacy `scraper.py`, `city_id: 34959`, `region_id: 3`, `category_id: 907` și străzile erau hardcodate în cod. *(Status: Rezolvat parțial prin crearea fișierelor declarative `config/targets.yaml` și `config/neighborhoods/bacau.yaml`, ce vor fi consumate de noul modul `src/crawler/`)*.
   3. **Absența mecanismelor de reziliență**:
      * Nu există retry cu Exponential Backoff & Jitter.
      * Nu există circuit breaker la erori de rețea sau rate-limiting (HTTP 429).

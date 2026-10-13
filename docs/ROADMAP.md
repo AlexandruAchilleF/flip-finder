@@ -84,6 +84,14 @@ flowchart TD
 
 **Obiectiv**: Eliminarea valorilor hardcodate, a cookie-urilor statice din cod și decuplarea crawler-ului de orașul Bacău și de platforma OLX.
 
+#### Status Execuție & Livrabile Curente:
+- [x] **Arhitectură Modulară Enterprise**: Inițializare pachet rădăcină `src/` layout cu subpachete dedicate (`core`, `schemas`, `db`, `crawler`, `services`, `api`) și `tests/`.
+- [x] **Config-Driven Setup**: Externalizare configurații declarative în [`config/targets.yaml`](file:///Users/alexflueraru/Documents/Projects/Flip%20Finder/config/targets.yaml) și rezoluție cartiere în [`config/neighborhoods/bacau.yaml`](file:///Users/alexflueraru/Documents/Projects/Flip%20Finder/config/neighborhoods/bacau.yaml).
+- [ ] **Contracte de Date Pydantic v2**: Modele de validare pentru configurație (`TargetConfigSchema`) și date brute extrase (`RawListingPayload`).
+- [ ] **Interfață Abstractă Scraper (Strategy Pattern)**: Definire `BaseScraperAdapter` în `src/crawler/base.py`.
+- [ ] **Adaptor Robust OLX**: Implementare `OLXGraphQLAdapter` cu sesiune dinamică și retry cu exponential backoff (`tenacity`) în `src/crawler/adapters/olx.py`.
+- [ ] **Normalizator Locație & Orchestrator**: `src/crawler/normalizers.py` și `src/crawler/orchestrator.py`.
+
 #### 1.1 Modelul Arhitectural: Strategy Pattern & Adapters
 * Se definește o clasă de bază abstractă (`BaseScraperAdapter`) folosind `abc.ABC` din Python:
   ```python
@@ -352,12 +360,12 @@ Reconfigurarea workflow-ului din `.github/workflows/` într-o suită strictă de
 
 ## 3. Plan de Migrare Fără Întreruperea Serviciului (Zero-Downtime Migration)
 
-| Fază | Focus Principal | Livrabile Cheie | Dependențe |
-| :--- | :--- | :--- | :--- |
-| **Săptămâna 1** | Decuplare & Validare Date | Modele Pydantic v2, `BaseScraperAdapter`, `config/targets.yaml`, eliminare cookie-uri hardcodate. | - |
-| **Săptămâna 2** | Persistență Robustă & Alembic | Migrare Alembic pe Neon DB, indexuri pe FK/Timestamps, Bulk Upsert idempotent, eliminare N+1. | Săptămâna 1 |
-| **Săptămâna 3** | Backend FastAPI & Analytics | Stratul Router-Service-Repository, endpoint-uri de Oportunități & Flips, integrare Redis Cache. | Săptămâna 2 |
-| **Săptămâna 4** | Refactorizare Consumatori | Streamlit actualizat să apeleze FastAPI, Telegram Webhook/Worker decuplat, Docker Compose & CI complet. | Săptămâna 3 |
+| Fază | Focus Principal | Livrabile Cheie | Dependențe | Status |
+| :--- | :--- | :--- | :--- | :--- |
+| **Săptămâna 1** | Decuplare & Validare Date | Modele Pydantic v2, `BaseScraperAdapter`, `config/targets.yaml`, eliminare cookie-uri hardcodate. | - | 🟡 În desfășurare |
+| **Săptămâna 2** | Persistență Robustă & Alembic | Migrare Alembic pe Neon DB, indexuri pe FK/Timestamps, Bulk Upsert idempotent, eliminare N+1. | Săptămâna 1 | ⚪ Planificat |
+| **Săptămâna 3** | Backend FastAPI & Analytics | Stratul Router-Service-Repository, endpoint-uri de Oportunități & Flips, integrare Redis Cache. | Săptămâna 2 | ⚪ Planificat |
+| **Săptămâna 4** | Refactorizare Consumatori | Streamlit actualizat să apeleze FastAPI, Telegram Webhook/Worker decuplat, Docker Compose & CI complet. | Săptămâna 3 | ⚪ Planificat |
 
 ---
 *Document corelat cu analiza sistemului existent:* [`docs/ARCHITECTURE.md`](file:///Users/alexflueraru/Documents/Projects/Flip%20Finder/docs/ARCHITECTURE.md).
